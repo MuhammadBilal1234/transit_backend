@@ -25,7 +25,9 @@ var gtfs_StopTimesShema = new mongoose.Schema({
     stop_headsign: String,
     pickup_type: String,
     drop_off_type: String,
-    shape_dist_traveled: String
+    shape_dist_traveled: String,
+    frequency: String,
+    Service_repeat:Number
 
 }, { collection: 'gtfs_stop_times' });
 

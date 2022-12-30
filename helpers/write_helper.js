@@ -10,6 +10,8 @@ var moment = require('moment');
 var siteConfig = require('../config/config');
 var startDayPattern = '2017-01-01';
 var gtfsStopTimes = require('../models/gtfs_stop_times');
+var distance = require('google-distance');
+distance.apiKey= 'AIzaSyBVDV2D0rSI4fOW_y_Gfor0Ejz_df-YC1M';
 const MISSING_FILE_ERROR = -2;
 
 var writeHelper = {
@@ -17,14 +19,12 @@ var writeHelper = {
         var dirPath = path + userID + '/' + userTime;
         mkdirp(dirPath, function (err) {
             if (err) {
-                console.log(err);
                 return callback(err, null);
             }
             var filePath = dirPath + '/' + fileName;
 
             fs.writeFile(filePath, content, function (err) {
                 if (err) {
-                    console.log(err);
                     return callback(err, null);
                 }
 
@@ -45,11 +45,13 @@ var writeHelper = {
             if (stats.isFile()) {
                 fs.readFile(filePath, 'utf8', function (err, data) {
                     if (err) return cb(err, null);
+                    console.log("file read successfull");
 
                     cb(null, data);
                 });
 
             } else {
+                console.log("file read not successfull");
 
                 cb(null, '');
             }
@@ -71,22 +73,19 @@ var writeHelper = {
             if (content === '') {
                 content = 'shape_id,shape_pt_lat,shape_pt_lon,shape_pt_sequence,shape_dist_traveled' + "\n";
             }
-
+            if(routeCount>0){
             allRoutes.forEach(function (element, index, array) {
-                console.log(index, (routeCount - 1));
                 if (err) {
-                    console.log(err);
                     return cb(err, null);
                 } else {
 
-                    element.route.forEach(function (rElement, rIndex, rArray) {
-                        content += 'Route_' + element.routeID + ',' + rElement.lat + ',' + rElement.lng + ',' + parseInt(rIndex + 1, 10) + ',' + "\n";
+                    Array.prototype.forEach.call(element.route,function (rElement, rIndex, rArray) {
+                        content += 'Route_' + element.routeID + ',' + rElement.stop_lat + ',' + rElement.stop_lon + ',' + parseInt(rIndex + 1, 10) + ',' + "\n";
                     });
 
                     if ((routeCount - 1) == index) {
                         writeHelper.writeFile(userID, userTime, 'shapes.txt', content, function (err, res) {
                             if (err) {
-                                console.log(err);
                                 return cb(err, null);
                             }
 
@@ -96,10 +95,11 @@ var writeHelper = {
                     }
                 }
             });
+        }
         });
     },
     createStopTimeFile: function (userID, userTime, allRoutes, cb) {
-        //var routeCount = allRoutes.length;
+        // var routeCount = allRoutes.length;
         var minToSeconds = 60*1000;
         var availableRoutesFrequencies = [];
         var availableRoutesStartTime = [];
@@ -118,91 +118,59 @@ var writeHelper = {
                 content = 'trip_id,arrival_time,departure_time,stop_id,stop_sequence,stop_headsign,pickup_type,drop_off_type,shape_dist_traveled' + "\n";
             }
 
-            allRoutes.forEach(function (element, index, array) {
-                element.serviceID.forEach(function (servElement, servIndex) {
-                console.log('servElement',servElement);
+            Array.prototype.forEach.call(allRoutes,function (element, index, array) {
+                Array.prototype.forEach.call(element.serviceID,function (servElement, servIndex) {
 
                 stops = [];
 
                 if (err)  return cb(err, null);
                 availableRoutesFrequencies = [];
 
-                element.frequency.forEach(function (felement, findex, farray) {
+                // element.frequency.forEach(function (felement, findex, farray) {
 
-                        availableRoutesFrequencies[findex] = {fr: null, time:null};
-                        availableRoutesFrequencies[findex].fr = parseInt(felement.fr, 10) * minToSeconds;
-                        availableRoutesFrequencies[findex].time = +new Date(moment(startDayPattern + felement.fromHr + ':' + element.startRouteTime.fromMin,siteConfig.fullDatePattern).format())
-                    });
-                availableRoutesStartTime[0] = +new Date(moment(startDayPattern + element.startRouteTime.startHr + ':' + element.startRouteTime.startMin,siteConfig.fullDatePattern).format());
-                availableRoutesEndTime[0] = +new Date(moment(startDayPattern + element.endRouteTime.startHr + ':' + element.endRouteTime.startMin,siteConfig.fullDatePattern).format());
-                frequencyIncrementer = availableRoutesFrequencies[0].fr;
+                //         availableRoutesFrequencies[findex] = {fr: null, time:null};
+                //         availableRoutesFrequencies[findex].fr = parseInt(felement.fr, 10) * minToSeconds;
+                //         availableRoutesFrequencies[findex].time = +new Date(moment(startDayPattern + felement.fromHr + ':' + element.startRouteTime.fromMin,siteConfig.fullDatePattern).format())
+                //     });
+                // availableRoutesStartTime[0] = +new Date(moment(startDayPattern + element.startRouteTime.startHr + ':' + element.startRouteTime.startMin,siteConfig.fullDatePattern).format());
+                // console.log(availableRoutesStartTime[0]);
+                // availableRoutesEndTime[0] = +new Date(moment(startDayPattern + element.endRouteTime.startHr + ':' + element.endRouteTime.startMin,siteConfig.fullDatePattern).format());
+                // frequencyIncrementer = availableRoutesFrequencies[0].fr;
                 tourIndex = 1;
 
                 element.route.forEach(function (rElement, rIndex, rArray) {
-                   if (rElement.additionalData) {
                        stops.push(rElement);
-                   }
                 });
+                
+                        for(var i=0;i<stops.length;i++){
 
-
-
-                for (currentTime = availableRoutesStartTime[0]; currentTime <= availableRoutesEndTime[0]; currentTime = currentTime + frequencyIncrementer) {
-                    previousMiddleTime = 0;
-                    previousDistanceSoFar = null;
-                    previousAvgSpeedAfterThis = null;
-                    stops.forEach(function (sElement, sIndex, sArray) {
-                        if (!sElement.additionalData.distanceSoFar) {
-                            sElement.additionalData.distanceSoFar = 0;
-                        }
-
-
-
-                        if (previousDistanceSoFar !== null) {
-
-                            if(previousAvgSpeedAfterThis) {
-
-                                distanceBetweenStops = sElement.additionalData.distanceSoFar - previousDistanceSoFar;
-
-                                middleTime = (distanceBetweenStops / (previousAvgSpeedAfterThis*1000))*60*60*1000;
-                            } else {
-                                middleTime = 0;
-                                previousAvgSpeedAfterThis = sElement.additionalData.avgSpeedAfterThis;
-                            }
-                        } else {
-                            previousDistanceSoFar = 0;
-                            previousAvgSpeedAfterThis = sElement.additionalData.avgSpeedAfterThis;
-                            middleTime = 0;
-                        }
-                        if (sElement.stopData) {
-                            content += element.routeID + servElement.serviceName + '_tour_' + tourIndex + ',' + (moment(currentTime + middleTime + previousMiddleTime).format('HH:mm:ss')) + ',' + (moment(currentTime + middleTime + previousMiddleTime).format('HH:mm:ss')) + ',' + sElement.stopData.stopId + ',' + parseInt(sIndex + 1, 10)  + ',0,0,0,' + "\n";
+                            content += element.routeID + servElement.serviceName + '_tour_' + tourIndex + ',' + stops[i].arrival_time + ',' + stops[i].departure_time + ',' + stops[i].stop_id + ',' + parseInt(i + 1, 10)  + ',' + element.stop_headsign+',0,0,' + "\n";
                             let newStopTimes = new gtfsStopTimes(
                                 {
                                     userID: userID,
                                     createGtfsTime: userTime,
                                     service_id: servElement.serviceName,
                                     route_id: element.routeID,
-                                    stopTime: new Date(moment(currentTime + middleTime + previousMiddleTime)),
+                                    // stopTime: new Date(),
                                     trip_id: element.routeID + servElement.serviceName + '_tour_' + tourIndex,
-                                    arrival_time: (moment(currentTime + middleTime + previousMiddleTime).format('HH:mm:ss')),
-                                    departure_time: (moment(currentTime + middleTime + previousMiddleTime).format('HH:mm:ss')),
-                                    stop_id: sElement.stopData.stopId,
-                                    stop_sequence: parseInt(sIndex + 1, 10),
-                                    stop_headsign: '0',
+                                    arrival_time: stops[i].arrival_time,
+                                    departure_time: stops[i].departure_time,
+                                    stop_id: stops[i].stop_id,
+                                    stop_sequence: parseInt(i + 1, 10),
+                                    stop_headsign: element.stop_headsign,
                                     pickup_type: '0',
                                     drop_off_type: '0',
-                                    shape_dist_traveled: ''
+                                    frequency:element.frequency[0],
+                                    Service_repeat: parseInt(element.Service_repeat)
+                                    // shape_dist_traveled: element.routeLength
                                 }
                             );
 
                             newStopTimes.save(function (err) {
 
                             });
-                            previousMiddleTime += middleTime;
+                            // previousMiddleTime += middleTime;
 
-
-                        }
-
-                    });
 
                     contentTrips += element.routeID + ',' + servElement.serviceName + ',' + element.routeID + servElement.serviceName + '_tour_' + tourIndex + ',,1,,' +  'Route_' + element.routeID + "\n";
 
@@ -210,11 +178,11 @@ var writeHelper = {
 
                     tourIndex++;
 
-                    availableRoutesFrequencies.forEach(function (freqelement, freqIndex, freqArray) {
-                       if (freqelement.time < currentTime) {
-                           frequencyIncrementer = freqelement.fr;
-                       }
-                    });
+                    // availableRoutesFrequencies.forEach(function (freqelement, freqIndex, freqArray) {
+                    //    if (freqelement.time < currentTime) {
+                    //        frequencyIncrementer = freqelement.fr;
+                    //    }
+                    // });
 
                 }
 
@@ -224,11 +192,12 @@ var writeHelper = {
 
             });
             });
-            writeHelper.writeFile(userID, userTime, 'stop_times.txt', content, function (err, res) {
+            writeHelper.writeFile(userID, userTime, 'stop_times.txt' , content, function (err, res) {
                 if (err) {
                     console.log(err);
                     return cb(err, null);
                 }
+                // console.log(res,content);
 
                 writeHelper.addLineToTripsFile(userID,userTime, contentTrips,function(err){
                     if (err) {
@@ -264,6 +233,8 @@ var writeHelper = {
 
         var path = __dirname + '/downloads/';
         var dirPath = path + userID + '/' + userTime + '/';
+
+        //var dirPath = path+ '5b3d138d6c9013733990ef7d/1551798083509/';
 
 
         archive.addFiles([

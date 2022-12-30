@@ -1,20 +1,26 @@
 /**
  * Created by lou_cifer on 14.01.17.
  */
-var express = require('express');
+var express = require("express");
 var router = express.Router();
-var agencies = require('../models/agencies');
+var agencies = require("../models/agencies");
 
 /* GET home page. */
-router.get('/', function (req, res, next) {
+router.get("/", async function (req, res, next) {
+  const paginationOptions = {
+    page: req.query.page,
+    limit: 10,
+  };
 
-    agencies.find({userID: req.decoded._id},function (err, data) {
-        if (err) {
-            return res.json({success: false, message: err.stringify()});
-        }
-
-        return res.json({success: true, message: data});
-    });
+  try {
+    const response = await agencies.paginate(
+      { userID: req.user._id },
+      paginationOptions
+    );
+    res.send(response);
+  } catch (error) {
+    res.status(400).send(error);
+  }
 });
 
 module.exports = router;

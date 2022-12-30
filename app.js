@@ -2,6 +2,7 @@ var express = require("express");
 var path = require("path");
 var favicon = require("serve-favicon");
 var logger = require("morgan");
+
 var cookieParser = require("cookie-parser");
 var bodyParser = require("body-parser");
 var mongoose = require("mongoose");
@@ -11,12 +12,19 @@ var passport = require("passport");
 var usersModel = require("./models/users");
 var Strategy = require("passport-facebook").Strategy;
 var cors = require("cors");
-mongoose.connect(
-  "mongodb://anbn:123456@mongo:27017/transit-planner?authSource=admin"
-);
-//mongoose.connect('mongodb://anbn:123456@localhost:27017/transit-planner?authSource=admin');
-//mongoose.connect('mongodb://anbn:123456@mongo:27017/transit-planner?authSource=admin');
-
+mongoose
+  // .connect(
+  //   "mongodb://anbn:123456@localhost:27016/transit-planner?authSource=admin"
+  // )
+  .connect(
+    // `mongodb+srv://bilal:bilal@transit-planner.atxp33u.mongodb.net/?retryWrites=true&w=majority`
+    `mongodb://admin:admin@ac-chiafsk-shard-00-00.atxp33u.mongodb.net:27017,ac-chiafsk-shard-00-01.atxp33u.mongodb.net:27017,ac-chiafsk-shard-00-02.atxp33u.mongodb.net:27017/?ssl=true&replicaSet=atlas-umgafo-shard-0&authSource=admin&retryWrites=true&w=majority`
+  )
+  .then((res) => console.log("WORKING MONOG "))
+  .catch((err) => console.log("ERR ", err));
+// mongoose.connect(
+//   "mongodb://anbn:123456@mongo:27017/transit-planner?authSource=admin"
+// );
 var GoogleStrategy = require("passport-google-oauth20").Strategy;
 var ensureAuth = require("./helpers/auth_helper").ensureAuth;
 

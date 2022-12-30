@@ -13,7 +13,7 @@ agency_fare_url
 * */
 var gtfs_calendarShema = new mongoose.Schema({
     userID: {type: String, index: true},
-    createGtfsTime: {type: String, index: true},
+    createGtfsTime: {type: Number, index: true},
     service_id: String,
     monday: Boolean,
     tuesday: Boolean,

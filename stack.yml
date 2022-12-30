@@ -1,0 +1,70 @@
+# Use root/example as user/password credentials
+# ANBN to start run docker compose -f stack.yml up
+#
+version: "3.6"
+#---------------------------
+services:
+  #---------------------------
+  mongo:
+    container_name: mongo
+    image: mongo:3.6.8
+    restart: always
+    networks:
+      - anbn
+    ports:
+      - 27016:27017
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: anbn
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+  #---------------------------
+  memcached:
+    container_name: memcached
+    image: bitnami/memcached:latest
+    ports:
+      - 11210:11211
+    networks:
+      - anbn
+  #---------------------------
+  mongo-express:
+    container_name: mongo-express
+    image: mongo-express
+    restart: always
+    ports:
+      - 8082:8081
+    networks:
+      - anbn
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: anbn
+      ME_CONFIG_MONGODB_ADMINPASSWORD: 123456
+      ME_CONFIG_MONGODB_URL: mongodb://anbn:123456@mongo:27017/
+  #---------------------------
+  planner-backend:
+    container_name: planner-backend
+    image: technologymaze/planner-backend:latest
+    restart: always
+    ports:
+      - 3100:3000
+    networks:
+      - anbn
+  #---------------------------
+  planner-frontend:
+    container_name: planner-frontend
+    image: technologymaze/planner-frontend:latest
+    restart: always
+    ports:
+      - 8585:8080
+    networks:
+      - anbn
+  #---------------------------
+  osrm:
+    container_name: osrm
+    image: technologymaze/osrm-v4.9.1:latest
+    restart: always
+    ports:
+      - 5004:5000
+    networks:
+      - anbn
+#---------------------------
+networks:
+  anbn: {}

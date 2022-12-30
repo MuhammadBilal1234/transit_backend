@@ -7,8 +7,8 @@ let authHelper = require('../helpers/auth_helper');
 let SHA256 = require("crypto-js/sha256");
 let files = require('../models/files');
 let stops = require('../models/stops');
-let gtfsCalendar = require('../models/gtfs_calendar');
-let gtfsStopTimes = require('../models/gtfs_stop_times');
+var gtfsCalendar = require('../models/gtfs_calendar');
+var gtfsStopTimes = require('../models/gtfs_stop_times');
 let ejs = require('ejs');
 router.get('/', function (req, res, next) {
 
@@ -17,6 +17,7 @@ router.get('/', function (req, res, next) {
     let date = new Date(req.query.date);
     let userID = req.query.user_id;
     let routeID = req.query.route_id;
+    let frequency = req.query.frequency;
     let calendarServices = null;
     let allStops = null;
     let stopNames = [];
@@ -62,7 +63,8 @@ router.get('/', function (req, res, next) {
     };
 
     let returnServicesInvolved = function (callback) {
-        let searchQuery = {$and: [{userID: userID}, {createGtfsTime: time}, {start_date: {$lte: date}}, {end_date: {$gte: date}}]};
+        // let searchQuery = {$and: [{userID: userID}, {createGtfsTime: time}, {start_date: {$lte: date}}, {end_date: {$gte: date}}]};
+        let searchQuery = {$and: [{userID: userID}, {createGtfsTime: time}]};
         searchQuery[dayOfTheWeek] = true;
 
         gtfsCalendar.find(searchQuery, function (err, calendars) {
@@ -98,17 +100,17 @@ router.get('/', function (req, res, next) {
             query.push(el);
         });
         console.log('query',query);
-        let finalQuery = {
+        var finalQuery = {
             route_id: routeID,
-            service_id: {$in: query},
+            // service_id: {$in: query},
             createGtfsTime: time
         };
 
         console.log(JSON.stringify(finalQuery));
-        gtfsStopTimes.find(finalQuery).sort('stopTime').exec(function (err, docs) {
+        gtfsStopTimes.find(finalQuery).sort({'arrival_time':1}).exec(function (err, docs) {
             if (err) return callback(err, null);
 
-            if (docs.length === 0) return callback('No routes for the selected date!', null);
+            if (docs.length === 0) return callback('Noo routes for the selected date!', null);
 
             stopsSorted = docs.map(function (doc) {
                 return JSON.parse(JSON.stringify(doc))
@@ -147,7 +149,9 @@ router.get('/', function (req, res, next) {
                 date: moment(date).format("dddd, MMMM Do YYYY"),
                 stopsSorted: stopsSorted,
                 stopNames: stopNames,
-                routeID: routeID
+                routeID: routeID,
+                moment:moment,
+                Service_repeat:stopsSorted[0].Service_repeat
             }, {}, function (err, html) {
                 if (err) {
                     console.log(err);

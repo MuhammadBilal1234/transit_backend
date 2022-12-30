@@ -24,7 +24,7 @@ RUN apt-get install apt-transport-https ca-certificates
 
 ENV NVM_DIR /usr/local/nvm
 RUN mkdir /usr/local/nvm
-ENV NODE_VERSION 6.9.1
+ENV NODE_VERSION 10.23.3
 
 # Install nvm with node and npm
 RUN curl https://raw.githubusercontent.com/creationix/nvm/v0.30.1/install.sh | bash \

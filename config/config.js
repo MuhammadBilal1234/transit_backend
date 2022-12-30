@@ -1,5 +1,5 @@
 var config = {
-  webName: "http://api.technologymaze.com",
+  webName: "http://api1.technologymaze.com",
   webLogo: "https://www.spyfleet.com/wp-content/uploads/2016/10/logo-2.png",
   secret:
     "DLQTEf1apfzyapw6CfAWbRziQGrWrUR5Tb05HoMqV1nEAqr238OFh4uppV3UUTpvUwJtxWw1eYeh0srP0Gk7dR8MpaV2a1EWff6i",
@@ -26,7 +26,7 @@ var config = {
     name: "Transit Planner Administration",
     signature: "Regards,<br>TidBits.in Team",
   },
-  webAppBaseURL: "http://api.technologymaze.com",
+  webAppBaseURL: "http://api1.technologymaze.com",
   mapBoxToken:
     "pk.eyJ1IjoidGVjaG5vbG9neW1hemUiLCJhIjoiY2lzNnVtM3ptMDE1dzJ6cGtybW56djF3aSJ9.H2GCXKEeLniz3FclslXGsg",
   fullDatePattern: "YYYY-MM-DD HH:mm",
