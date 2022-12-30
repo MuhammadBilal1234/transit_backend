@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "debug": "node --inspect=5859 ./bin/www",
-    "start": "node ./bin/www -dd",
+    "start": "node app.js",
     "run:container": "docker compose -f stack.yml up"
   },
   "dependencies": {
